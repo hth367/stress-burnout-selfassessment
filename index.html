@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Самооценка: стрес и бърнаут</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2933;
+      --muted: #667085;
+      --accent: #d97706;
+      --accent-dark: #b45309;
+      --border: #d0d5dd;
+      --yes: #b91c1c;
+      --no: #166534;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(16,24,40,0.08);
+      margin-top: 16px;
+    }
+    .notice {
+      background: #fff7ed;
+      border-left: 5px solid var(--accent);
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      color: #7c2d12;
+    }
+    .question {
+      font-size: 21px;
+      font-weight: 700;
+      margin: 10px 0 22px;
+    }
+    .counter {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .progress > div {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width .25s ease;
+    }
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .yes {
+      background: #fee2e2;
+      color: var(--yes);
+    }
+    .no {
+      background: #dcfce7;
+      color: var(--no);
+    }
+    .restart {
+      background: var(--accent);
+      color: white;
+      width: 100%;
+      margin-top: 18px;
+    }
+    .restart:hover { background: var(--accent-dark); }
+    .hidden { display: none; }
+    .result-number {
+      font-size: 54px;
+      font-weight: 800;
+      text-align: center;
+      margin: 8px 0 2px;
+      color: var(--accent-dark);
+    }
+    .result-label {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .interpretation {
+      padding: 16px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      font-size: 18px;
+    }
+    .small {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 18px;
+    }
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 20px;
+    }
+    @media (max-width: 520px) {
+      .header h1 { font-size: 25px; }
+      .question { font-size: 19px; }
+      .answers { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="header">
+      <h1>Самооценка: стрес и бърнаут</h1>
+      <p>Отговорете с „Да“ или „Не“ за последните 6–12 месеца.</p>
+    </div>
+
+    <section id="quiz" class="card">
+      <div class="notice">
+        Самооценката е лична. Отговорите не се изпращат и не се съхраняват.
+      </div>
+
+      <div class="counter" id="counter"></div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div class="question" id="questionText"></div>
+
+      <div class="answers">
+        <button class="yes" onclick="answer(true)">Да</button>
+        <button class="no" onclick="answer(false)">Не</button>
+      </div>
+    </section>
+
+    <section id="result" class="card hidden">
+      <div class="counter">Вашият резултат</div>
+      <div class="result-number" id="score"></div>
+      <div class="result-label">отговора „Да“ от 12</div>
+
+      <div class="interpretation" id="interpretation"></div>
+
+      <div class="small">
+        Чек-листът е ориентировъчен и не е диагностичен инструмент.
+        При трайни оплаквания или влошаване на състоянието обсъдете ги с личен лекар или психолог.
+      </div>
+
+      <button class="restart" onclick="restartQuiz()">Направи самооценката отново</button>
+    </section>
+
+    <div class="footer">
+      СТМ „Медико“ ЕООД
+    </div>
+  </main>
+
+  <script>
+    const questions = [
+      "Станали ли сте по-цинични или по-критични на работното място?",
+      "Отивате ли на работа с нежелание?",
+      "По-раздразнителни и нетърпеливи ли сте с колеги и клиенти?",
+      "Чувствате ли се по-уморени и изтощени в края на работния ден?",
+      "По-трудно ли Ви е да се концентрирате?",
+      "Имате ли усещането, че не постигате нищо значимо в работата?",
+      "Разочаровани ли сте от работата или от професията си?",
+      "Посягате ли по-често към храна, алкохол или лекарства, за да се почувствате по-добре?",
+      "Имате ли нарушения на съня?",
+      "Имате ли необясними главоболие или стомашни оплаквания, боледувате ли по-често?",
+      "Забравяте ли ангажименти, срокове и уговорки?",
+      "Отделяте ли се по-често от колеги, близки и приятели?"
+    ];
+
+    let index = 0;
+    let yesCount = 0;
+
+    const questionText = document.getElementById("questionText");
+    const counter = document.getElementById("counter");
+    const progressBar = document.getElementById("progressBar");
+    const quiz = document.getElementById("quiz");
+    const result = document.getElementById("result");
+    const score = document.getElementById("score");
+    const interpretation = document.getElementById("interpretation");
+
+    function renderQuestion() {
+      counter.textContent = `Въпрос ${index + 1} от ${questions.length}`;
+      questionText.textContent = questions[index];
+      progressBar.style.width = `${(index / questions.length) * 100}%`;
+    }
+
+    function answer(isYes) {
+      if (isYes) yesCount++;
+      index++;
+
+      if (index < questions.length) {
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      quiz.classList.add("hidden");
+      result.classList.remove("hidden");
+      score.textContent = yesCount;
+
+      let text = "";
+      if (yesCount <= 2) {
+        text = "Работният стрес изглежда поносим. Пазете баланса.";
+      } else if (yesCount <= 6) {
+        text = "Вероятен силен работен стрес или ранен бърнаут. Време е за промяна.";
+      } else {
+        text = "Обмислете консултация със специалист – личен лекар или психолог.";
+      }
+
+      interpretation.textContent = text;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function restartQuiz() {
+      index = 0;
+      yesCount = 0;
+      result.classList.add("hidden");
+      quiz.classList.remove("hidden");
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
